@@ -19,39 +19,28 @@ require('./services/passport');
 
 const app = express();
 
-// --- TRUST PROXY ---
-// Must be added for Render/Vercel to correctly handle cookies
+// --- TRUST PROXY & COOKIE CONFIG (CRUCIAL FOR DEPLOYMENT) ---
+// 1. Trust proxy required for Render/Vercel to set secure cookies
 app.set('trust proxy', 1);
 
-// --- CORS MIDDLEWARE (MUST BE AT THE TOP) ---
-const corsOptions = {
-    origin: allowedOrigin,
-    credentials: true,
-    // Add all methods used by the app, especially OPTIONS
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS", 
-    allowedHeaders: ['Content-Type', 'Authorization'],
-};
-
-// Use CORS globally
-app.use(cors(corsOptions));
-
-// --- Handle OPTIONS pre-flight requests explicitly ---
-// Browsers require this for complex requests (POST, DELETE)
-app.options('*', cors(corsOptions)); // Respond to ALL pre-flights
+// 2. CORS MIDDLEWARE (Simplest & Most Reliable)
+app.use(cors({
+  origin: allowedOrigin,
+  credentials: true
+}));
 
 // --- MIDDLEWARE ---
 app.use(express.json());
 
-// Tell Express to use sessions
+// 3. EXPRESS SESSION (with correct secure settings)
 app.use(
   session({
     secret: process.env.COOKIE_KEY,
     resave: false,
     saveUninitialized: false,
-    // --- COOKIE SECURITY SETTINGS (CRUCIAL FOR DEPLOYMENT) ---
     cookie: {
-      secure: true,      
-      sameSite: 'none', 
+      secure: true,      // Must be true for HTTPS
+      sameSite: 'none',  // Must be 'none' for cross-site cookie sharing
     }
   })
 );
