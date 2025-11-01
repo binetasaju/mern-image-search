@@ -2,11 +2,21 @@ const express = require('express');
 const connectDB = require('./db');
 const session = require('express-session');
 const passport = require('passport');
-const cors = require('cors'); 
+const cors = require('cors');
 require('dotenv').config();
 
-// --- Define the allowed frontend URL (Your Vercel URL) ---
-const allowedOrigin = 'https://mern-image-search.vercel.app'; 
+// --- Define ALL allowed origins ---
+// Vercel Production URL (Primary domain)
+const VERCEL_URL = 'https://mern-image-search.vercel.app'; 
+// Render Backend URL (The server must allow its own URL for direct testing)
+const RENDER_URL = 'https://mern-image-search-server.onrender.com';
+
+const allowedOrigins = [
+  VERCEL_URL,
+  RENDER_URL,
+  'http://localhost:3000', // For local testing
+  'https://vercel.app' // Vercel often uses temporary subdomains
+];
 
 // --- DB AND MODELS ---
 connectDB();
@@ -19,28 +29,39 @@ require('./services/passport');
 
 const app = express();
 
-// --- TRUST PROXY & COOKIE CONFIG (CRUCIAL FOR DEPLOYMENT) ---
-// 1. Trust proxy required for Render/Vercel to set secure cookies
+// --- TRUST PROXY ---
 app.set('trust proxy', 1);
 
-// 2. CORS MIDDLEWARE (Simplest & Most Reliable)
+// --- CORS MIDDLEWARE (Using array of origins) ---
 app.use(cors({
-  origin: allowedOrigin,
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or direct backend pings)
+    if (!origin) return callback(null, true); 
+    
+    // Check if origin is in our allowed list
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // --- MIDDLEWARE ---
 app.use(express.json());
 
-// 3. EXPRESS SESSION (with correct secure settings)
+// Tell Express to use sessions
 app.use(
   session({
     secret: process.env.COOKIE_KEY,
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: true,      // Must be true for HTTPS
-      sameSite: 'none',  // Must be 'none' for cross-site cookie sharing
+      secure: true,      
+      sameSite: 'none', 
     }
   })
 );
