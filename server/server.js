@@ -2,7 +2,11 @@ const express = require('express');
 const connectDB = require('./db');
 const session = require('express-session');
 const passport = require('passport');
+const cors = require('cors'); 
 require('dotenv').config();
+
+// --- Define the allowed frontend URL (Your Vercel URL) ---
+const allowedOrigin = 'https://mern-image-search.vercel.app'; 
 
 // --- DB AND MODELS ---
 // Connect to Database
@@ -10,13 +14,20 @@ connectDB();
 // We must load the models BEFORE passport uses them
 require('./models/User');
 require('./models/Search');
-require('./models/Collection'); // <-- THIS IS THE MISSING LINE
+require('./models/Collection');
 
 // --- PASSPORT & SESSION ---
 // Load passport config (this runs the code in passport.js)
 require('./services/passport');
 
 const app = express();
+
+// --- CORS MIDDLEWARE (MUST BE AT THE TOP) ---
+app.use(cors({
+  origin: allowedOrigin,
+  credentials: true // Crucial for passing cookies/sessions
+}));
+// --- END CORS ---
 
 // --- MIDDLEWARE ---
 // This middleware parses incoming JSON requests (like POST /api/search)
