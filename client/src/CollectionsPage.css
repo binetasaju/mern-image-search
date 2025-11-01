@@ -1,0 +1,75 @@
+.collections-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.collections-page .app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.no-collections {
+  text-align: center;
+  font-size: 1.2em;
+  color: var(--text-color-light);
+  margin-top: 50px;
+}
+
+.collections-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 30px;
+  margin-top: 30px;
+}
+
+.collection-card {
+  background: var(--widget-background);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.collection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #f9f9f9; /* Can leave this light, or use --background-color */
+  border-bottom: 1px solid var(--border-color);
+}
+
+.collection-header h3 {
+  margin: 0;
+}
+
+.delete-collection-btn {
+  background: var(--danger-color);
+  color: var(--danger-text-color);
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.delete-collection-btn:hover {
+  background: var(--danger-hover);
+}
+
+.collection-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  padding: 20px;
+}
+
+.collection-images img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 4px;
+}

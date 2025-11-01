@@ -1,0 +1,46 @@
+/* This sets the default theme */
+:root {
+  --primary-color: #007bff;
+  --primary-hover: #0056b3;
+  --secondary-color: #28a745;
+  --secondary-hover: #218838;
+  --info-color: #17a2b8;
+  --info-hover: #138496;
+  --danger-color: #dc3545;
+  --danger-hover: #c82333;
+  --background-color: #f4f7f6;
+  --widget-background: #ffffff;
+  --text-color: #333;
+  --text-color-light: #777;
+  --border-color: #eee;
+  --primary-text-color: #ffffff;
+  --secondary-text-color: #ffffff;
+  --info-text-color: #ffffff;
+  --danger-text-color: #ffffff;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Use CSS variables */
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
