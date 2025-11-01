@@ -8,11 +8,13 @@ const LoginPage = () => {
         <h1>Image Search Website</h1>
         <p>Please log in to continue</p>
 
-        <a href="http://localhost:5000/auth/google" className="login-button google">
+        {/* --- CORRECTED LINK: Using a relative path that Vercel rewrites to Render --- */}
+        <a href="/auth/google" className="login-button google">
           Login with Google
         </a>
         
-        <a href="http://localhost:5000/auth/github" className="login-button github">
+        {/* --- CORRECTED LINK: Using a relative path that Vercel rewrites to Render --- */}
+        <a href="/auth/github" className="login-button github">
           Login with GitHub
         </a>
       </div>

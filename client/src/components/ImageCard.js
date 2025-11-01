@@ -9,9 +9,9 @@ const ImageCard = ({ image, onSelect, isSelected }) => {
 
   // --- THIS IS THE FIX ---
   // We MUST use the full, absolute URL to hit the server directly
-  const downloadUrl = `http://localhost:5000/api/download?url=${encodeURIComponent(
-    image.links.download_location
-  )}`;
+const downloadUrl = `/api/download?url=${encodeURIComponent(
+  image.links.download_location
+)}`;
 
   return (
     <div className={cardClassName} onClick={() => onSelect(image)}>

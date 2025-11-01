@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import tinycolor from 'tinycolor2'; // We will use this fully now
+import tinycolor from 'tinycolor2'; 
 import { ThemeContext } from '../context/ThemeContext';
 import { getContrastYIQ } from '../utils/colorHelper';
 import TopSearchBanner from './TopSearchBanner';
@@ -17,54 +17,38 @@ function SearchDashboard() {
   const [searchResults, setSearchResults] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentTerm, setCurrentTerm] = useState('');
-  const { theme, setTheme } = useContext(ThemeContext); // Get theme AND setTheme
+  const { theme, setTheme } = useContext(ThemeContext);
 
   const fetchImages = async (term, page) => {
     try {
       const res = await axios.post('/api/search', { term, page });
 
-      // --- THIS IS THE NEW, VIBRANT THEME LOGIC ---
+      // --- THEME LOGIC (UNCHANGED) ---
       if (page === 1 && res.data.length > 0) {
         const baseColor = tinycolor(res.data[0].color || '#007bff');
         
-        // Generate a "tetrad" (four-color) palette for variety
         const palette = baseColor.tetrad(); 
-        
-        // Assign colors from the palette
-        const primaryColor = baseColor.saturate(10); // Make it vibrant
-        const secondaryColor = palette[1].saturate(10); // Search button
-        const infoColor = palette[2].saturate(10);      // Load More button
-        const dangerColor = palette[3].saturate(10);     // Delete buttons
+        const primaryColor = baseColor.saturate(10); 
+        const secondaryColor = palette[1].saturate(10); 
+        const infoColor = palette[2].saturate(10);      
+        const dangerColor = palette[3].saturate(10);     
 
-        // Generate the full theme
         const newTheme = {
-          ...theme, // Start with default
-          
-          // Backgrounds (Light & less saturated, but based on the color)
+          ...theme,
           '--background-color': baseColor.clone().desaturate(30).lighten(38).toString(),
           '--widget-background': baseColor.clone().desaturate(10).lighten(45).toString(),
           '--border-color': baseColor.clone().desaturate(20).lighten(30).toString(),
-          
-          // Text (Dark & less saturated, based on the color)
           '--text-color': baseColor.clone().desaturate(50).darken(50).toString(),
           '--text-color-light': baseColor.clone().desaturate(30).darken(30).toString(),
-
-          // Primary (Links, Save Button)
           '--primary-color': primaryColor.toString(),
           '--primary-hover': primaryColor.darken(10).toString(),
           '--primary-text-color': getContrastYIQ(primaryColor.toHexString()),
-          
-          // Secondary (Search Button)
           '--secondary-color': secondaryColor.toString(),
           '--secondary-hover': secondaryColor.darken(10).toString(),
           '--secondary-text-color': getContrastYIQ(secondaryColor.toHexString()),
-
-          // Info (Load More Button)
           '--info-color': infoColor.toString(),
           '--info-hover': infoColor.darken(10).toString(),
           '--info-text-color': getContrastYIQ(infoColor.toHexString()),
-
-          // Danger (Delete buttons) - now also themed!
           '--danger-color': dangerColor.toString(),
           '--danger-hover': dangerColor.darken(10).toString(),
           '--danger-text-color': getContrastYIQ(dangerColor.toHexString()),
@@ -94,7 +78,6 @@ function SearchDashboard() {
 
   // Fetch initial data on load
   useEffect(() => {
-    // ... (This is unchanged) ...
     const fetchData = async () => {
       try {
         const userRes = await axios.get('/api/current_user');
@@ -115,8 +98,6 @@ function SearchDashboard() {
     };
     fetchData();
   }, []);
-  
-  // --- All other functions (handleSearch, handleLoadMore, etc.) are UNCHANGED ---
   
   const handleSearch = (term) => {
     setCurrentTerm(term);
@@ -156,14 +137,14 @@ function SearchDashboard() {
     return <div>Loading user data...</div>;
   }
 
-  // --- The entire return (...) JSX is UNCHANGED ---
   return (
     <div className="App">
       <header className="app-header">
         <h1>Image Search Website</h1>
         <div className="nav-links">
           <Link to="/collections" className="nav-link">My Collections</Link>
-          <a href="http://localhost:5000/api/logout" className="nav-link-logout">Logout</a>
+          {/* --- CORRECTED LINK: Using a relative path that Vercel rewrites --- */}
+          <a href="/api/logout" className="nav-link-logout">Logout</a>
         </div>
       </header>
 
