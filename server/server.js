@@ -9,7 +9,8 @@ require('dotenv').config();
 connectDB();
 // We must load the models BEFORE passport uses them
 require('./models/User');
-require('./models/Search'); // <-- NEW: Load the Search model
+require('./models/Search');
+require('./models/Collection'); // <-- THIS IS THE MISSING LINE
 
 // --- PASSPORT & SESSION ---
 // Load passport config (this runs the code in passport.js)
@@ -19,7 +20,7 @@ const app = express();
 
 // --- MIDDLEWARE ---
 // This middleware parses incoming JSON requests (like POST /api/search)
-app.use(express.json()); // <-- NEW
+app.use(express.json());
 
 // Tell Express to use sessions
 app.use(
@@ -37,8 +38,9 @@ app.use(passport.session());
 // --- ROUTES ---
 // We call our route functions and pass in the 'app' object
 require('./routes/authRoutes')(app);
-require('./routes/searchRoutes')(app); // <-- NEW: Use the search routes
-
+require('./routes/searchRoutes')(app);
+require('./routes/collectionRoutes')(app); 
+require('./routes/downloadRoutes')(app); 
 // A simple test route
 app.get('/', (req, res) => {
   res.send('API is running...');

@@ -1,5 +1,6 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const GitHubStrategy = require('passport-github2').Strategy; // <-- ADD THIS
 const mongoose = require('mongoose');
 require('dotenv').config();
 
@@ -45,6 +46,33 @@ passport.use(
       }).save();
 
       // 4. Call 'done' with the new user
+      done(null, user);
+    }
+  )
+);
+// ... (your GoogleStrategy is here) ...
+
+// --- ADD THIS NEW BLOCK ---
+passport.use(
+  new GitHubStrategy(
+    {
+      clientID: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      callbackURL: '/auth/github/callback',
+      proxy: true,
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      // This logic is the same as the Google one
+      const existingUser = await User.findOne({ googleId: profile.id }); // Using googleId to store any provider's ID
+
+      if (existingUser) {
+        return done(null, existingUser);
+      }
+
+      const user = await new User({
+        googleId: profile.id, // We're re-using the googleId field.
+        displayName: profile.displayName || profile.username,
+      }).save();
       done(null, user);
     }
   )

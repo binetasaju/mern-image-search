@@ -7,14 +7,13 @@ const Search = mongoose.model('searches');
 
 module.exports = (app) => {
   // --- 1. Get Top 5 Searches (Public) ---
-  // This uses a complex MongoDB query called "aggregation"
   app.get('/api/top-searches', async (req, res) => {
     try {
       const topSearches = await Search.aggregate([
-        { $group: { _id: '$term', count: { $sum: 1 } } }, // Group by term and count occurrences
-        { $sort: { count: -1 } }, // Sort by count (most popular first)
-        { $limit: 5 }, // Take only the top 5
-        { $project: { _id: 0, term: '$_id' } }, // Reformat the output
+        { $group: { _id: '$term', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 5 },
+        { $project: { _id: 0, term: '$_id' } },
       ]);
       res.send(topSearches.map((item) => item.term));
     } catch (err) {
@@ -27,8 +26,8 @@ module.exports = (app) => {
   app.get('/api/history', requireAuth, async (req, res) => {
     try {
       const history = await Search.find({ _user: req.user.id })
-        .sort({ timestamp: -1 }) // Newest first
-        .limit(20); // Get the 20 most recent
+        .sort({ timestamp: -1 })
+        .limit(20);
       res.send(history);
     } catch (err) {
       console.error('Error fetching history:', err);
@@ -36,62 +35,55 @@ module.exports = (app) => {
     }
   });
 
-  // --- 3. Clear User's Personal History (Protected) ---
+  // --- 3. Clear ALL User History (Protected) ---
   app.delete('/api/history', requireAuth, async (req, res) => {
     try {
-      // Find all searches for this user and delete them
       await Search.deleteMany({ _user: req.user.id });
-
-      // Send back an empty array to confirm
       res.send([]);
     } catch (err) {
       console.error('Error clearing history:', err);
       res.status(500).send({ error: 'Error clearing history' });
     }
   });
-// --- 3b. Delete ONE History Item (Protected) ---
-app.delete('/api/history/:id', requireAuth, async (req, res) => {
-  try {
-    const searchId = req.params.id;
 
-    // Find the item and make sure it belongs to the logged-in user
-    const item = await Search.findOne({ _id: searchId, _user: req.user.id });
+  // --- 4. Delete ONE History Item (Protected) ---
+  app.delete('/api/history/:id', requireAuth, async (req, res) => {
+    try {
+      const searchId = req.params.id;
+      const item = await Search.findOne({ _id: searchId, _user: req.user.id });
 
-    if (!item) {
-      return res.status(404).send({ error: 'History item not found' });
+      if (!item) {
+        return res.status(404).send({ error: 'History item not found' });
+      }
+
+      await Search.deleteOne({ _id: searchId, _user: req.user.id });
+      res.send({ success: true });
+    } catch (err) {
+      res.status(500).send({ error: 'Error deleting history item' });
     }
+  });
 
-    // Delete it
-    await Search.deleteOne({ _id: searchId, _user: req.user.id });
-
-    res.send({ success: true });
-  } catch (err) {
-    res.status(500).send({ error: 'Error deleting history item' });
-  }
-});
-
-  // --- 4. Perform a Search (Protected) ---
+  // --- 5. Perform a Search (Protected) ---
   app.post('/api/search', requireAuth, async (req, res) => {
-    // This line was missing! We need to tell the server
-    // to expect a JSON body.
-    // Wait... this should be in server.js. Let's assume it is.
-    const { term } = req.body;
+    const { term, page = 1 } = req.body;
 
     if (!term) {
       return res.status(422).send({ error: 'A search term is required' });
     }
 
-    // 1. Save the search to our database
-    try {
-      const search = new Search({
-        term,
-        _user: req.user.id,
-        timestamp: new Date(),
-      });
-      await search.save();
-    } catch (dbErr) {
-      console.error('DB SAVE ERROR:', dbErr.message);
-      // We'll just log the error but still let the user search
+    // 1. Save the search (only if it's the first page)
+    if (page === 1) {
+      try {
+        const search = new Search({
+          term,
+          _user: req.user.id,
+          timestamp: new Date(),
+        });
+        await search.save();
+      } catch (dbErr) {
+        console.error('DB SAVE ERROR:', dbErr.message);
+        // Don't block the search if DB save fails, just log it
+      }
     }
 
     // 2. Call the Unsplash API
@@ -101,6 +93,8 @@ app.delete('/api/history/:id', requireAuth, async (req, res) => {
         {
           params: {
             query: term,
+            page: page,
+            per_page: 12,
           },
           headers: {
             Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`,
@@ -108,10 +102,23 @@ app.delete('/api/history/:id', requireAuth, async (req, res) => {
         }
       );
 
-      // 3. Send the image results back to our client
-      res.send(unsplashResponse.data.results);
+      // 3. Send a curated list of properties to the client
+      const images = unsplashResponse.data.results.map((img) => ({
+        id: img.id,
+        color: img.color, // For the dynamic theme
+        alt_description: img.alt_description,
+        urls: {
+          small: img.urls.small,
+        },
+        links: {
+          download_location: img.links.download_location, // For the download
+        },
+      }));
+
+      res.send(images);
     } catch (unsplashErr) {
       console.error('UNSPLASH ERROR:', unsplashErr.message);
+      // This is the only other place a response is sent.
       res.status(500).send({ error: 'Error fetching images from Unsplash' });
     }
   });
