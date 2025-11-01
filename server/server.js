@@ -2,7 +2,7 @@ const express = require('express');
 const connectDB = require('./db');
 const session = require('express-session');
 const passport = require('passport');
-const cors = require('cors');
+const cors = require('cors'); 
 require('dotenv').config();
 
 // --- Define the allowed frontend URL (Your Vercel URL) ---
@@ -21,13 +21,23 @@ const app = express();
 
 // --- TRUST PROXY ---
 // Must be added for Render/Vercel to correctly handle cookies
-app.set('trust proxy', 1); // <-- ADD THIS
+app.set('trust proxy', 1);
 
 // --- CORS MIDDLEWARE (MUST BE AT THE TOP) ---
-app.use(cors({
-  origin: allowedOrigin,
-  credentials: true // Crucial for passing cookies/sessions
-}));
+const corsOptions = {
+    origin: allowedOrigin,
+    credentials: true,
+    // Add all methods used by the app, especially OPTIONS
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS", 
+    allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+// Use CORS globally
+app.use(cors(corsOptions));
+
+// --- Handle OPTIONS pre-flight requests explicitly ---
+// Browsers require this for complex requests (POST, DELETE)
+app.options('*', cors(corsOptions)); // Respond to ALL pre-flights
 
 // --- MIDDLEWARE ---
 app.use(express.json());
@@ -40,8 +50,8 @@ app.use(
     saveUninitialized: false,
     // --- COOKIE SECURITY SETTINGS (CRUCIAL FOR DEPLOYMENT) ---
     cookie: {
-      secure: true,      // Must be true because the connection is HTTPS (Render/Vercel)
-      sameSite: 'none',  // Must be 'none' to allow cross-site requests (Vercel -> Render)
+      secure: true,      
+      sameSite: 'none', 
     }
   })
 );
@@ -55,6 +65,7 @@ require('./routes/authRoutes')(app);
 require('./routes/searchRoutes')(app);
 require('./routes/collectionRoutes')(app); 
 require('./routes/downloadRoutes')(app); 
+
 // A simple test route
 app.get('/', (req, res) => {
   res.send('API is running...');
