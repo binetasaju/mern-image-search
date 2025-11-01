@@ -4,15 +4,10 @@ const session = require('express-session');
 const passport = require('passport');
 const cors = require('cors'); 
 require('dotenv').config();
+const path = require('path'); // <-- ADD THIS
 
-// --- Define ALL allowed origins (Vercel, Render, Local) ---
-const allowedOrigins = [
-  'https://mern-image-search.vercel.app', 
-  'https://mern-image-search-server.onrender.com',
-  'http://localhost:3000',
-  // You may also need to allow the Vercel temporary deployment URL format
-  'https://*.vercel.app'
-];
+// --- Define the allowed frontend URL ---
+const allowedOrigin = 'https://mern-image-search.vercel.app'; 
 
 // --- DB AND MODELS ---
 connectDB();
@@ -28,24 +23,33 @@ const app = express();
 // --- TRUST PROXY ---
 app.set('trust proxy', 1);
 
-// --- CORS MIDDLEWARE (Using array of origins) ---
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.some(ao => origin.startsWith(ao))) {
-      return callback(null, true);
-    }
-    return callback(new Error('Not allowed by CORS'), false);
-  },
-  credentials: true,
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+// --- CORS MIDDLEWARE ---
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Allow requests from Vercel/Render/Localhost and requests with no origin (direct API ping)
+        if (!origin || ['https://mern-image-search.vercel.app', 'https://mern-image-search-server.onrender.com', 'http://localhost:3000'].some(ao => origin.startsWith(ao))) {
+            return callback(null, true);
+        }
+        // Also allow Vercel's temporary subdomains
+        if (origin.endsWith('.vercel.app')) {
+            return callback(null, true);
+        }
+        return callback(new Error('Not allowed by CORS'), false);
+    },
+    credentials: true,
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+    allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Handle explicit pre-flights
 
 // --- MIDDLEWARE ---
 app.use(express.json());
 
-// 1. Explicitly define the session store options
-const sessionOptions = {
+// Tell Express to use sessions
+app.use(
+  session({
     secret: process.env.COOKIE_KEY,
     resave: false,
     saveUninitialized: false,
@@ -53,10 +57,8 @@ const sessionOptions = {
       secure: true,      
       sameSite: 'none', 
     }
-};
-// 2. Use the defined options
-app.use(session(sessionOptions));
-
+  })
+);
 
 // Tell Express to use Passport for sessions
 app.use(passport.initialize());
@@ -68,7 +70,20 @@ require('./routes/searchRoutes')(app);
 require('./routes/collectionRoutes')(app); 
 require('./routes/downloadRoutes')(app); 
 
-// A simple test route
+// --- FINAL FIX: STATIC ASSET ROUTING ---
+// If the app is in production (which it is on Render/Vercel)
+if (process.env.NODE_ENV === 'production') {
+    // 1. Express serves up production assets (main.css, main.js) from the client/build folder
+    app.use(express.static('client/build')); // <-- This serves the logo!
+
+    // 2. Express serves the index.html file for all unknown requests (client-side routing)
+    app.get('*', (req, res) => {
+        res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
+    });
+}
+// --- END FINAL FIX ---
+
+// A simple test route (used by Render to check if API is running)
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
