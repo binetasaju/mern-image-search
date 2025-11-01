@@ -1,50 +1,53 @@
 const passport = require('passport');
 
+// --- Define the Frontend URL ---
+const FRONTEND_URL = 'https://mern-image-search.vercel.app';
+
 module.exports = (app) => {
-  // 1. The route to start the Google login flow
+  // Google Login Route
   app.get(
     '/auth/google',
     passport.authenticate('google', {
-      scope: ['profile', 'email'], // What we want to get from Google
+      scope: ['profile', 'email'],
     })
   );
 
-  // 2. The callback route that Google redirects to
+  // Google Callback Route (Must redirect to Vercel)
   app.get(
     '/auth/google/callback',
     passport.authenticate('google'),
     (req, res) => {
-      // Successful login, redirect to the CLIENT
-      res.redirect('http://localhost:3000'); // <-- CHANGED
+      // Successful login, redirect to the Vercel frontend
+      res.redirect(FRONTEND_URL); // <-- CRITICAL FIX
     }
   );
 
-// 1. The route to start the GitHub login flow
-app.get('/auth/github', passport.authenticate('github', { scope: ['read:user'] }));
+  // GitHub Login Route
+  app.get('/auth/github', passport.authenticate('github', { scope: ['read:user'] }));
 
-// 2. The callback route that GitHub redirects to
-app.get(
-  '/auth/github/callback',
-  passport.authenticate('github'),
-  (req, res) => {
-    // Successful login, redirect to the CLIENT
-    res.redirect('http://localhost:3000');
-  }
-);
-  // 3. A route to check who is logged in
+  // GitHub Callback Route (Must redirect to Vercel)
+  app.get(
+    '/auth/github/callback',
+    passport.authenticate('github'),
+    (req, res) => {
+      // Successful login, redirect to the Vercel frontend
+      res.redirect(FRONTEND_URL); // <-- CRITICAL FIX
+    }
+  );
+
+  // Check User Route
   app.get('/api/current_user', (req, res) => {
-    res.send(req.user); // req.user is added by Passport
+    res.send(req.user);
   });
 
-  // 4. A route to log out
+  // Logout Route
   app.get('/api/logout', (req, res, next) => {
-    // This function now requires a callback
     req.logout((err) => {
       if (err) {
         return next(err);
       }
-      // Redirect to the CLIENT
-      res.redirect('http://localhost:3000'); // <-- CHANGED
+      // Redirect to the Vercel frontend login page
+      res.redirect(`${FRONTEND_URL}/login`); // <-- CRITICAL FIX
     });
   });
 };
