@@ -21,12 +21,11 @@ function SearchDashboard() {
 
   const fetchImages = async (term, page) => {
     try {
+      // Axios requests will still work because of the "proxy" in package.json
       const res = await axios.post('/api/search', { term, page });
 
-      // --- THEME LOGIC (UNCHANGED) ---
       if (page === 1 && res.data.length > 0) {
         const baseColor = tinycolor(res.data[0].color || '#007bff');
-        
         const palette = baseColor.tetrad(); 
         const primaryColor = baseColor.saturate(10); 
         const secondaryColor = palette[1].saturate(10); 
@@ -53,10 +52,8 @@ function SearchDashboard() {
           '--danger-hover': dangerColor.darken(10).toString(),
           '--danger-text-color': getContrastYIQ(dangerColor.toHexString()),
         };
-
         setTheme(newTheme);
       }
-      // --- END THEME LOGIC ---
 
       if (page === 1) {
         setImages(res.data);
@@ -76,7 +73,6 @@ function SearchDashboard() {
     }
   };
 
-  // Fetch initial data on load
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -143,8 +139,7 @@ function SearchDashboard() {
         <h1>Image Search Website</h1>
         <div className="nav-links">
           <Link to="/collections" className="nav-link">My Collections</Link>
-          {/* --- CORRECTED LINK: Using a relative path that Vercel rewrites --- */}
-          <a href="/api/logout" className="nav-link-logout">Logout</a>
+          <a href="http://localhost:5000/api/logout" className="nav-link-logout">Logout</a>
         </div>
       </header>
 
