@@ -1,38 +1,31 @@
 import React, { createContext, useState } from 'react';
 
-// This is the new default theme (Neutral with a Blue accent)
+// This is the default theme (our old blue)
 const defaultTheme = {
-  // Accent Color
   '--primary-color': '#007bff',
   '--primary-hover': '#0056b3',
-  '--primary-text-color': '#ffffff',
-
-  // Neutral Colors for other buttons
-  '--secondary-color': '#6c757d',
-  '--secondary-hover': '#5a6268',
-  '--secondary-text-color': '#ffffff',
-  '--info-color': '#6c757d',
-  '--info-hover': '#5a6268',
-  '--info-text-color': '#ffffff',
+  '--secondary-color': '#28a745',
+  '--secondary-hover': '#218838',
+  '--info-color': '#17a2b8',
+  '--info-hover': '#138496',
   '--danger-color': '#dc3545',
   '--danger-hover': '#c82333',
-  '--danger-text-color': '#ffffff',
-
-  // Neutral Backgrounds & Text
-  '--background-color': '#f8f9fa',
+  '--background-color': '#f4f7f6',
   '--widget-background': '#ffffff',
-  '--text-color': '#212529',
-  '--text-color-light': '#6c757d',
-  '--border-color': '#dee2e6',
+  '--text-color': '#333',
+  '--text-color-light': '#777',
+  '--border-color': '#eee',
+  '--primary-text-color': '#ffffff',
+  '--secondary-text-color': '#ffffff',
+  '--info-text-color': '#ffffff',
+  '--danger-text-color': '#ffffff',
 };
 
-// Create the context
 export const ThemeContext = createContext({
   theme: defaultTheme,
   setTheme: () => {},
 });
 
-// Create the provider component
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(defaultTheme);
 

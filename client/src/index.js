@@ -8,12 +8,10 @@ import App from './App';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    {/* --- WRAP WITH THIS --- */}
-    <ThemeProvider>
+    <ThemeProvider> {/* <-- WRAP YOUR APP */}
       <BrowserRouter>
         <App />
       </BrowserRouter>
     </ThemeProvider>
-    {/* --- END WRAP --- */}
   </React.StrictMode>
 );

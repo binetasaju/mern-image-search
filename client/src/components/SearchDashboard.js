@@ -1,13 +1,41 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import tinycolor from 'tinycolor2'; 
+import tinycolor from 'tinycolor2';
 import { ThemeContext } from '../context/ThemeContext';
 import { getContrastYIQ } from '../utils/colorHelper';
 import TopSearchBanner from './TopSearchBanner';
 import SearchHistory from './SearchHistory';
 import SearchBar from './SearchBar';
 import ImageList from './ImageList';
+
+// ✅ FIXED: Corrected saturation logic
+const findMostVibrantColor = (images) => {
+  const fallback = tinycolor('#007bff'); // fallback color
+
+  if (!images || images.length === 0) return fallback;
+
+  let mostVibrantColor = tinycolor(images[0].color || fallback);
+  let maxSaturation = mostVibrantColor.toHsl().s; // 0 to 1
+
+  images.forEach((image) => {
+    if (!image?.color) return;
+    const color = tinycolor(image.color);
+    const saturation = color.toHsl().s; // 0 to 1
+
+    if (saturation > maxSaturation) {
+      maxSaturation = saturation;
+      mostVibrantColor = color;
+    }
+  });
+
+  // If color isn't vibrant enough, boost saturation
+  if (maxSaturation < 0.2) {
+    return mostVibrantColor.saturate(30);
+  }
+
+  return mostVibrantColor;
+};
 
 function SearchDashboard() {
   const [user, setUser] = useState(null);
@@ -21,24 +49,25 @@ function SearchDashboard() {
 
   const fetchImages = async (term, page) => {
     try {
-      // Axios requests will still work because of the "proxy" in package.json
       const res = await axios.post('/api/search', { term, page });
 
+      // --- THEME LOGIC START ---
       if (page === 1 && res.data.length > 0) {
-        const baseColor = tinycolor(res.data[0].color || '#007bff');
-        const palette = baseColor.tetrad(); 
-        const primaryColor = baseColor.saturate(10); 
-        const secondaryColor = palette[1].saturate(10); 
-        const infoColor = palette[2].saturate(10);      
-        const dangerColor = palette[3].saturate(10);     
+        const baseColor = findMostVibrantColor(res.data);
+        const palette = baseColor.analogous();
+        const primaryColor = baseColor.saturate(10);
+        const secondaryColor = palette[1].saturate(10);
+        const infoColor = palette[2].saturate(10);
+        const dangerColor = primaryColor.clone().desaturate(20);
 
-        const newTheme = {
-          ...theme,
-          '--background-color': baseColor.clone().desaturate(30).lighten(38).toString(),
-          '--widget-background': baseColor.clone().desaturate(10).lighten(45).toString(),
-          '--border-color': baseColor.clone().desaturate(20).lighten(30).toString(),
-          '--text-color': baseColor.clone().desaturate(50).darken(50).toString(),
-          '--text-color-light': baseColor.clone().desaturate(30).darken(30).toString(),
+        // ✅ FIXED: use functional update to prevent stale closure
+        setTheme((prevTheme) => ({
+          ...prevTheme,
+          '--background-color': baseColor.clone().lighten(45).desaturate(50).toString(),
+          '--widget-background': baseColor.clone().lighten(50).desaturate(30).toString(),
+          '--border-color': baseColor.clone().lighten(30).desaturate(50).toString(),
+          '--text-color': baseColor.clone().darken(40).desaturate(50).toString(),
+          '--text-color-light': baseColor.clone().darken(20).desaturate(30).toString(),
           '--primary-color': primaryColor.toString(),
           '--primary-hover': primaryColor.darken(10).toString(),
           '--primary-text-color': getContrastYIQ(primaryColor.toHexString()),
@@ -51,13 +80,13 @@ function SearchDashboard() {
           '--danger-color': dangerColor.toString(),
           '--danger-hover': dangerColor.darken(10).toString(),
           '--danger-text-color': getContrastYIQ(dangerColor.toHexString()),
-        };
-        setTheme(newTheme);
+        }));
       }
+      // --- THEME LOGIC END ---
 
       if (page === 1) {
         setImages(res.data);
-        setSearchResults(`You searched for "${term}" -- ${res.data.length} results.`);
+        setSearchResults(`You searched for "${term}" — ${res.data.length} results.`);
       } else {
         setImages((prevImages) => [...prevImages, ...res.data]);
         setSearchResults(null);
@@ -85,6 +114,7 @@ function SearchDashboard() {
       } catch (err) {
         console.log('Error fetching user/history');
       }
+
       try {
         const topSearchRes = await axios.get('/api/top-searches');
         setTopSearches(topSearchRes.data);
@@ -94,7 +124,7 @@ function SearchDashboard() {
     };
     fetchData();
   }, []);
-  
+
   const handleSearch = (term) => {
     setCurrentTerm(term);
     setCurrentPage(1);
@@ -147,25 +177,23 @@ function SearchDashboard() {
 
       <main className="main-content">
         <div className="search-area">
-          <>
-            <h2>Welcome, {user.displayName}!</h2>
-            <SearchBar
-              onSearch={handleSearch}
-              history={history}
-              topSearches={topSearches}
-            />
-            {searchResults && <p>{searchResults}</p>}
-            
-            <ImageList images={images} />
+          <h2>Welcome, {user.displayName}!</h2>
+          <SearchBar
+            onSearch={handleSearch}
+            history={history}
+            topSearches={topSearches}
+          />
+          {searchResults && <p>{searchResults}</p>}
 
-            {images.length > 0 && (
-              <div className="load-more-container">
-                <button onClick={handleLoadMore} className="load-more-btn">
-                  Load More
-                </button>
-              </div>
-            )}
-          </>
+          <ImageList images={images} />
+
+          {images.length > 0 && (
+            <div className="load-more-container">
+              <button onClick={handleLoadMore} className="load-more-btn">
+                Load More
+              </button>
+            </div>
+          )}
         </div>
 
         {user && (

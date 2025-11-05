@@ -26,10 +26,10 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  
-  /* Use CSS variables */
   background-color: var(--background-color);
   color: var(--text-color);
+  /* Add a transition for a smooth color change */
+  transition: background-color 0.5s, color 0.5s;
 }
 
 * {
@@ -39,6 +39,7 @@ body {
 a {
   color: var(--primary-color);
   text-decoration: none;
+  transition: color 0.3s;
 }
 
 a:hover {
